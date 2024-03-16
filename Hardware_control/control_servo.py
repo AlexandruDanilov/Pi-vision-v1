@@ -34,13 +34,13 @@ def main(stdscr):
         
         # Adjust target angles based on key press
         if key == curses.KEY_UP:
-            target_angle_y = min(target_angle_y + 5, 90)
+            target_angle_y = min(target_angle_y + 5, 30)
         elif key == curses.KEY_DOWN:
-            target_angle_y = max(target_angle_y - 5, -30)
+            target_angle_y = max(target_angle_y - 5, -10)
         elif key == curses.KEY_LEFT:
-            target_angle_x = max(target_angle_x - 5, -45)
+            target_angle_x = max(target_angle_x - 5, -18)
         elif key == curses.KEY_RIGHT:
-            target_angle_x = min(target_angle_x + 5, 45)
+            target_angle_x = min(target_angle_x + 5, 18)
         
         # Move servos to the new target angles
         servo_x.value = target_angle_x / 60
