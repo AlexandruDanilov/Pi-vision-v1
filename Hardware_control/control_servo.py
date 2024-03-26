@@ -1,54 +1,63 @@
-import curses
-from gpiozero import Servo
+from machine import Pin, PWM
+import utime
 
-# Set the pin numbers for the servos
-servo_pin_x = 12
-servo_pin_y = 13
+MID = 1500000
+MIN = 1000000
+MAX = 2000000
 
-# Set the minimum and maximum pulse widths (in seconds) for the servos
-min_pulse_width = 0.5 / 1000  # 0.5 ms
-max_pulse_width = 2.5 / 1000  # 2.5 ms
+SERVO_MIN_ANGLE = -90
+SERVO_MAX_ANGLE = 90
+SERVO_MIN_PULSE_WIDTH = 1000000
+SERVO_MAX_PULSE_WIDTH = 2000000
 
-# Create Servo instances
-servo_x = Servo(servo_pin_x, min_pulse_width=min_pulse_width, max_pulse_width=max_pulse_width)
-servo_y = Servo(servo_pin_y, min_pulse_width=min_pulse_width, max_pulse_width=max_pulse_width)
+# Function to convert angle to pulse width
+def angle_to_pulse_width(angle):
+    return SERVO_MIN_PULSE_WIDTH + int((angle - SERVO_MIN_ANGLE) / (SERVO_MAX_ANGLE - SERVO_MIN_ANGLE) * (SERVO_MAX_PULSE_WIDTH - SERVO_MIN_PULSE_WIDTH))
 
-def main(stdscr):
-    # Clear screen
-    stdscr.clear()
+# Setup servo pins
+pin_x = 26
+pin_y = 18
+pwm_x = PWM(Pin(pin_x))
+pwm_y = PWM(Pin(pin_y))
+
+pwm_x.freq(50)
+pwm_y.freq(50)
+pwm_x.duty_ns(MID)
+pwm_y.duty_ns(MID)
+
+# Function to move servo to a specified angle
+def move_to_angle(servo, angle):
+    if servo == 'x':
+        pwm = pwm_x
+    elif servo == 'y':
+        pwm = pwm_y
+    else:
+        print("Invalid servo selection")
+        return
     
-    # Set initial target angles
-    target_angle_x = 0
-    target_angle_y = 0
-    
+    pulse_width = angle_to_pulse_width(angle)
+    pwm.duty_ns(pulse_width)
+
+# Move both motors to specified target angles
+def move_to_target_angles(target_angle_x, target_angle_y):
+    move_to_angle('x', target_angle_x)
+    move_to_angle('y', target_angle_y)
+
+# Get target angles from user input
+def get_target_angles_from_input():
     while True:
-        # Display current angles and instructions
-        stdscr.addstr(0, 0, "Servo X - Current angle: {:.1f} degrees".format(target_angle_x))
-        stdscr.addstr(1, 0, "Press LEFT/RIGHT arrow keys to adjust angle (increments of 5 degrees)")
-        stdscr.addstr(2, 0, "Servo Y - Current angle: {:.1f} degrees".format(target_angle_y))
-        stdscr.addstr(3, 0, "Press UP/DOWN arrow keys to adjust angle (increments of 5 degrees)")
-        stdscr.refresh()
-        
-        # Capture key press
-        key = stdscr.getch()
-        
-        # Adjust target angles based on key press
-        if key == curses.KEY_UP:
-            target_angle_y = min(target_angle_y + 5, 90)
-        elif key == curses.KEY_DOWN:
-            target_angle_y = max(target_angle_y - 5, -30)
-        elif key == curses.KEY_LEFT:
-            target_angle_x = max(target_angle_x - 5, -45)
-        elif key == curses.KEY_RIGHT:
-            target_angle_x = min(target_angle_x + 5, 45)
-        
-        # Move servos to the new target angles
-        servo_x.value = target_angle_x / 60
-        servo_y.value = target_angle_y / 90
+        try:
+            target_angle_x = float(input("Enter target angle for X (-90 to 90 degrees): "))
+            target_angle_y = float(input("Enter target angle for Y (-90 to 90 degrees): "))
+            if -90 <= target_angle_x <= 90 and -90 <= target_angle_y <= 90:
+                return target_angle_x, target_angle_y
+            else:
+                print("Angles must be between -90 and 90 degrees")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
 
-try:
-    curses.wrapper(main)
-except KeyboardInterrupt:
-    # Clean up
-    servo_x.close()
-    servo_y.close()
+# Example: Move motors to user-specified angles
+if __name__ == "__main__":
+    target_angle_x, target_angle_y = get_target_angles_from_input()
+    move_to_target_angles(target_angle_x, target_angle_y)
+
