@@ -66,7 +66,7 @@ def handle_uart_input():
                 return 0, -1  # Decrease Y angle
             elif data == "left":
                 return -2, 0  # Decrease X angle
-            elif data ==qq "right":
+            elif data == "right":
                 return 2, 0  # Increase X angle
             else:
                 print("Invalid command:", data)
